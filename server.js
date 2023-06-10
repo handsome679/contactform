@@ -1,82 +1,42 @@
 const express = require('express');
 const app = express();
 const nodemailer = require('nodemailer');
-const axios = require('axios');
-require('dotenv').config();
 
-// Set up body parsing middleware
+// Middleware to parse form data
 app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
-
-// Serve the HTML form
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
-});
 
 // Handle form submission
-app.post('/send-email', (req, res) => {
+app.post('/send', (req, res) => {
   const { name, email, message } = req.body;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const text = `New contact form submission:\n\nName: ${name}\nEmail: ${email}\nMessage: ${message}`;
 
-  // Send message to Telegram bot
-  axios
-    .post(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      chat_id: chatId,
-      text: text,
-    })
-    .then(() => {
-      console.log('Message sent to Telegram bot');
-    })
-    .catch((error) => {
-      console.log('Error sending message to Telegram bot:', error.message);
-    });
-
-  // Create a transporter using your email service provider details
+  // Create a transporter using your email configuration
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    service: 'gmail', // e.g., Gmail, Yahoo, etc.
     auth: {
-      user: process.env.EMAIL_ADDRESS,
-      pass: process.env.EMAIL_PASSWORD,
-    },
+      user: 'handsomed679@gmail.com',
+      pass: 'rbdpmecuurfodgot'
+    }
   });
 
-  // Prepare the email message
+  // Create the email options
   const mailOptions = {
-    from: process.env.EMAIL_ADDRESS,
-    to: email,
-    subject: 'Thank You for Contacting Us',
-    text: `Dear ${name},\n\nThank you for contacting us. We appreciate your message.\n\nBest regards,\nYour Company`,
-  };
+  from: 'handsomed679@gmail.com',
+  to: 'handsomed679@gmail.com',
+  subject: 'Thank you for your submission',
+  text: `We received the following message from ${name} (${email}):\n\n${message}`
+};
 
-  // Send the email to the user
+
+  // Send the email
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.log('Error occurred while sending the email to the user:', error);
+      console.log(error);
+      res.send('Error occurred while sending email');
     } else {
-      console.log('Email sent to the user: ' + info.response);
+      console.log('Email sent: ' + info.response);
+      res.send('Email sent successfully');
     }
   });
-
-  // Prepare the email message for the thank you message
-  const thankYouMailOptions = {
-    from: process.env.EMAIL_ADDRESS,
-    to: email,
-    subject: 'Thank You for Contacting Us',
-    text: `Dear ${name},\n\nThank you for contacting us. We appreciate your message and will get back to you shortly.\n\nBest regards,\nYour Company`,
-  };
-
-  // Send the thank you email to the user
-  transporter.sendMail(thankYouMailOptions, (error, info) => {
-    if (error) {
-      console.log('Error occurred while sending the thank you email to the user:', error);
-    } else {
-      console.log('Thank you email sent to the user: ' + info.response);
-    }
-  });
-
-  res.send('Thank you for contacting us. We will get back to you shortly.');
 });
 
 // Start the server
